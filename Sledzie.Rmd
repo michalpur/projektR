@@ -1,0 +1,244 @@
+---
+title: "ProjektR"
+author: "Michał Purczyński"
+date: "29 05 2019"
+output: 
+  html_document: 
+    df_print: default
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(width = 180)
+```
+
+# Streszczenie raportu
+
+Celem analizy było zrozumienie, dlaczego na przestrzeni ostatnich 60 lat zmniejszała się długość śledzia oceanicznego wyławianego w Europie.
+
+<b>Definicje zmiennych poddanych analizie:</b>
+
+<b>length:</b> długość złowionego śledzia [cm];
+<b>cfin1:</b> dostępność planktonu [zagęszczenie Calanus finmarchicus gat. 1];</br>
+<b>cfin2:</b> dostępność planktonu [zagęszczenie Calanus finmarchicus gat. 2];</br>
+<b>chel1:</b> dostępność planktonu [zagęszczenie Calanus helgolandicus gat. 1];</br>
+<b>chel2:</b> dostępność planktonu [zagęszczenie Calanus helgolandicus gat. 2];</br>
+<b>lcop1:</b> dostępność planktonu [zagęszczenie widłonogów gat. 1];</br>
+<b>lcop2:</b> dostępność planktonu [zagęszczenie widłonogów gat. 2];</br>
+<b>fbar:</b> natężenie połowów w regionie [ułamek pozostawionego narybku];</br>
+<b>recr:</b> roczny narybek [liczba śledzi];</br>
+<b>cumf:</b> łączne roczne natężenie połowów w regionie [ułamek pozostawionego narybku];</br>
+<b>totaln:</b> łączna liczba ryb złowionych w ramach połowu [liczba śledzi];</br>
+<b>sst:</b> temperatura przy powierzchni wody [°C];</br>
+<b>sal:</b> poziom zasolenia wody [Knudsen ppt];</br>
+<b>xmonth:</b> miesiąc połowu [numer miesiąca];</br>
+<b>nao:</b> oscylacja północnoatlantycka [mb]</br>
+
+<b>Najważniejszymi zmiennymi wpływającymi na zmniejszanie się długości śledzia są:</b>
+
+<b>fbar</b> - zbyt mały ułamek pozostawionego narybku, co sugeruje, że odławiane są nie tylko 3 letnie śledzie ale może i młodsze,</br>
+<b>cumf</b> - łączne natężenie połowów,</br>
+
+z przyczyn klimatycznych na wyróżnienie zasługują zmienne:</br>
+<b>cfin2</b> - spadająca dostępność planktonu, negatywnie wpływająca na jego długość,</br>
+<b>sst</b>- wzrost temperatury wody, negatywnie wpływający na jego długość</br>
+
+<table style="width:100%">
+<tr><b> Coefficients:       Estimate Std. Error t value Pr(>|t|)</b> </tr></br>
+<tr> fbar	  &nbsp;             7.435e+00 	&nbsp; 8.793e-02 	&nbsp; 84.557 	&nbsp; < 2e-16 ***</tr></br>
+<tr> cumf 	&nbsp;            -1.135e+01 	&nbsp; 1.737e-01	&nbsp; -65.342 	&nbsp; < 2e-16 ***</tr></br>
+<tr> cfin2 	&nbsp;            6.729e-02  	&nbsp; 2.748e-03 	&nbsp; 24.488  	&nbsp;< 2e-16 ***</tr></br>
+<tr> sst  	&nbsp;            -2.965e-01 	&nbsp; 1.248e-02 	&nbsp;-23.761  	&nbsp;< 2e-16 ***</tr></br>
+</table>
+
+</br>
+
+<b> Model jest kiepsko dopasowany - R2 na poziomie 0,34 na zbiorze uczącym. MAE wynosci 1.07 </b> 
+
+     RMSE  Rsquared       MAE 
+1.3625958 0.3253109 1.0691648 
+
+# Ustawienia programu R
+## Wykorzystane bilblioteki
+
+```{r biblioteki, message=FALSE, warning=FALSE}
+library(data.table) 
+library(ggplot2)
+library(xtable) 
+library(plotly)
+library(lme4)
+library(caret)
+```
+
+## Ustalenie wartości generatora liczb losowych
+
+Kod zapewniający powtarzalność wyników przy każdym uruchomieniu raportu na tych samych danych:
+
+```{r liczby_losowe}
+set.seed(23)
+```
+
+# Dane statystyczne
+## Wczytanie danych z pliku
+
+```{r plik}
+ROOT<- "C:/2_PracaPod/ProjektR/"
+dane <- data.frame(fread(paste0(ROOT,'sledzie.csv')))
+```
+
+## Uzupełnienie brakujących danych
+
+```{r uzupelnienie, message=FALSE, warning=FALSE }
+i_rows <- nrow(dane)
+j_cols <- ncol(dane)
+
+for (i in 1:(i_rows)) {
+    for (j in 1:(j_cols)) {
+        if ((dane[i,j])=="?"){
+            if (i<i_rows) {
+              nast <- (dane[i+1,j+1])
+            } else {
+              nast <- 0
+            }
+
+            if ((dane[i,j+1])==nast){
+                if (is.finite(as.numeric(dane[i+1,j])*as.numeric(dane[i,j+1])/as.numeric(dane[i+1,j+1]))){
+                  dane[i,j]<-(as.numeric(dane[i+1,j])*as.numeric(dane[i,j+1])/as.numeric(dane[i+1,j+1]))
+                } else {
+                  dane[i,j]<-0
+                }
+            } else {
+              if (is.finite(as.numeric(dane[i-1,j])*as.numeric(dane[i,j+1])/as.numeric(dane[i-1,j+1]))){
+                dane[i,j]<-(as.numeric(dane[i-1,j])*as.numeric(dane[i,j+1])/as.numeric(dane[i-1,j+1]))
+              } else {
+                dane[i,j]<-0
+              }
+            }
+        }
+    }
+}
+```
+## Rozmiar zbioru
+
+```{r rozmiar, echo = FALSE}
+cols.num <- c("cfin1","cfin2","chel1","chel2","lcop1","lcop2","sst")
+dane[cols.num] <- sapply(dane[cols.num],as.numeric)
+dim(dane)
+```
+## Podstawowe statystyki dotyczące danych
+
+```{r stat}
+knitr::kable(summary(dane))
+```
+
+# Prezentacja danych statystycznych
+##  Analiza wartości atrybutów (prezentacja rozkładów wartości)
+
+```{r rozklad1, echo = FALSE}
+hist(dane$length,border="blue", col="green",main="length",xlab="długość złowionego śledzia [cm]")
+hist(dane$cfin1,border="blue", col="green",main="cfin1",xlab="zagęszczenie Calanus finmarchicus gat. 1")
+hist(dane$cfin2,border="blue", col="green",main="cfin2",xlab="zagęszczenie Calanus finmarchicus gat. 2")
+hist(dane$chel1,border="blue", col="green",main="chel1",xlab="zagęszczenie Calanus helgolandicus gat. 1")
+hist(dane$chel2,border="blue", col="green",main="chel2",xlab="zagęszczenie Calanus helgolandicus gat. 2")
+hist(dane$lcop1,border="blue", col="green",main="lcop1",xlab="zagęszczenie widłonogów gat. 1")
+hist(dane$lcop2,border="blue", col="green",main="lcop2",xlab="zagęszczenie widłonogów gat. 2")
+
+hist(dane$fbar,border="blue", col="green",main="fbar",xlab="ułamek pozostawionego narybku")
+hist(dane$recr,border="blue", col="green",main="recrl",xlab="roczny narybek [liczba śledzi]")
+hist(dane$cumf,border="blue", col="green",main="cumf",xlab="łączne roczne natężenie połowów w regionie")
+hist(dane$totaln,border="blue", col="green",main="totaln",xlab="łączna liczba ryb złowionych w ramach połowu")
+hist(dane$sst,border="blue", col="green",main="sst",xlab="temperatura przy powierzchni wody [°C]")
+hist(dane$sal,border="blue", col="green",main="sal",xlab="poziom zasolenia wody [Knudsen ppt]")
+hist(dane$xmonth,border="blue", col="green",main="xmonth",xlab="miesiąc połowu [numer miesiąca")
+hist(dane$nao,border="blue", col="green",main="nao",xlab="oscylacja północnoatlantycka [mb]")
+```
+
+## Korelacja między zmiennymi
+
+```{r korelacja, echo = FALSE}
+
+mcor<-round(cor(dane),2)
+lower<-lower.tri(mcor, diag = FALSE)
+lower<-mcor
+lower[lower.tri(mcor, diag=TRUE)]<-""
+lower<-as.data.frame(lower)
+knitr::kable(lower)
+```
+
+# Dodanie wymiaru czasu 
+Dane nie są ułożone idealnie chrolonogicznie (liczba zmian miesięcy sugerująca na zmianę roku wynosi ponad 1800),
+dlatego podzielono je na równe obszary (lata) po 877 obserwacji
+
+```{r czas}
+#dodanie wymiaru czasu
+dane["year"] <-1
+
+i_rows <- nrow(dane)
+for (i in 2:(i_rows)){
+  if ((i %% 877) == 0) {
+    dane[i,"year"] = dane[i-1,"year"]+1
+  } else {
+    dane[i,"year"] = dane[i-1,"year"] 
+  }
+}
+```
+
+# Modelowanie ekonometryczne i prezentacja danych 
+## Wykres rozmiaru śledzi - ze względu na dużą liczbę danych wyświetlono co 10 punkt
+
+```{r wykres, echo = FALSE}
+i_rows <- nrow(dane)
+wek10p <- 1:i_rows
+wek10p <- wek10p[!wek10p %% 10 ==0]
+dane3 <- dane[-c(wek10p),]
+
+d <- ggplot(data = dane3, mapping = aes(x=year, y=length)) + geom_point(mapping = aes(x=year, y=length)) + geom_smooth(method="gam", formula= y ~ s(x))
+ggplotly(d)
+```
+
+## Podziału zbioru na dane uczące, walidujące i testowe
+
+```{r podzial_na_zbiory}
+#wyodrębnienie zbioru uczącego
+inTraining <- createDataPartition(y = dane$length,p = .75,list = FALSE)
+training <- dane[ inTraining,]
+
+#podział pozostałych danych na zbiór na walidujący i testujący
+inTesting <- createDataPartition(y = dane[-inTraining,]$length, p = .5, list = FALSE)
+
+#testowy zbiór danych
+testing <- dane[-inTraining,][inTesting,]
+#zbiór walidacyjny
+validating <- dane[-inTraining,][-inTesting,]
+```
+
+## Model ekonometryczny zbudowany na zbiorze treningowym
+
+```{r model}
+model <- lm( length ~ cfin1 + cfin2 + chel1 + lcop1 + lcop2 + fbar + recr + cumf + totaln + sst + sal + factor(xmonth) + year,data = training)
+summary(model)
+```
+
+## Trendy zmiennych najbardziej istotnych statystycznie
+
+```{r trendy,  echo = FALSE}
+ggplot(data = dane3, mapping = aes(x=year, y=cfin2))+ geom_smooth(method="gam", formula= y ~ s(x)) + ggtitle("cfin2") 
+ggplot(data = dane3, mapping = aes(x=year, y=fbar))+ geom_smooth(method="gam", formula= y ~ s(x))+ ggtitle("fbar")
+ggplot(data = dane3, mapping = aes(x=year, y=cumf))+ geom_smooth(method="gam", formula= y ~ s(x))+ ggtitle("cumf")
+ggplot(data = dane3, mapping = aes(x=year, y=sst))+ geom_smooth(method="gam", formula= y ~ s(x))+ ggtitle("sst")
+```
+
+## Walidacja modelu na danych walidacyjnych
+
+```{r walidacja}
+lm_pred <- predict(model, validating)
+postResample(pred = lm_pred, obs = validating$length)
+```
+
+

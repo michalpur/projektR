@@ -20,11 +20,11 @@ options(width = 180)
 
 # Streszczenie raportu
 
-Celem analizy było zrozumienie, dlaczego na przestrzeni ostatnich 60 lat zmniejszała się długość śledzia oceanicznego wyławianego w Europie.
+<b>Celem analizy było zrozumienie, dlaczego na przestrzeni ostatnich 60 lat zmniejszała się długość śledzia oceanicznego wyławianego w Europie.</b>
 
 <b>Definicje zmiennych poddanych analizie:</b>
 
-<b>length:</b> długość złowionego śledzia [cm];
+<b>length:</b> długość złowionego śledzia [cm];</br>
 <b>cfin1:</b> dostępność planktonu [zagęszczenie Calanus finmarchicus gat. 1];</br>
 <b>cfin2:</b> dostępność planktonu [zagęszczenie Calanus finmarchicus gat. 2];</br>
 <b>chel1:</b> dostępność planktonu [zagęszczenie Calanus helgolandicus gat. 1];</br>
@@ -42,27 +42,29 @@ Celem analizy było zrozumienie, dlaczego na przestrzeni ostatnich 60 lat zmniej
 
 <b>Najważniejszymi zmiennymi wpływającymi na zmniejszanie się długości śledzia są:</b>
 
-<b>fbar</b> - zbyt mały ułamek pozostawionego narybku, co sugeruje, że odławiane są nie tylko 3 letnie śledzie ale może i młodsze,</br>
+<b>fbar</b> - zbyt mały ułamek pozostawionego narybku,</br>
 <b>cumf</b> - łączne natężenie połowów,</br>
 
-z przyczyn klimatycznych na wyróżnienie zasługują zmienne:</br>
-<b>cfin2</b> - spadająca dostępność planktonu, negatywnie wpływająca na jego długość,</br>
-<b>sst</b>- wzrost temperatury wody, negatywnie wpływający na jego długość</br>
+powyższe zmienne pokazują mocną ekspansję rybołówstwa, która mocno ingeruje w naturalny ekosystem.
+
+Z przyczyn zmian klimatycznych wyróżniają się następujące zmienne:</br>
+<b>cfin2</b> - spadająca dostępność planktonu oraz</br>
+<b>sst</b> - wzrost temperatury wody, które negatywnie wpływają na długość śledzia. </br>
 
 <table style="width:100%">
 <tr><b> Coefficients:       Estimate Std. Error t value Pr(>|t|)</b> </tr></br>
-<tr> fbar	  &nbsp;             7.435e+00 	&nbsp; 8.793e-02 	&nbsp; 84.557 	&nbsp; < 2e-16 ***</tr></br>
-<tr> cumf 	&nbsp;            -1.135e+01 	&nbsp; 1.737e-01	&nbsp; -65.342 	&nbsp; < 2e-16 ***</tr></br>
-<tr> cfin2 	&nbsp;            6.729e-02  	&nbsp; 2.748e-03 	&nbsp; 24.488  	&nbsp;< 2e-16 ***</tr></br>
-<tr> sst  	&nbsp;            -2.965e-01 	&nbsp; 1.248e-02 	&nbsp;-23.761  	&nbsp;< 2e-16 ***</tr></br>
+<tr> fbar	  &nbsp;&nbsp;&nbsp;&nbsp; 7.435e+00 	    &nbsp;&nbsp;  8.793e-02 	&nbsp;&nbsp; 84.557 	&nbsp;&nbsp; < 2e-16 ***</tr></br>
+<tr> cumf 	&nbsp;            -1.135e+01 	    &nbsp;&nbsp;  1.737e-01	  &nbsp;&nbsp; -65.342 	&nbsp;&nbsp; < 2e-16 ***</tr></br>
+<tr> cfin2 &nbsp;&nbsp;        6.729e-02      &nbsp;&nbsp;  2.748e-03 	&nbsp;&nbsp; 24.488  	&nbsp;&nbsp; < 2e-16 ***</tr></br>
+<tr> sst  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-2.965e-01 	&nbsp;&nbsp;  1.248e-02 	&nbsp;&nbsp;-23.761  	&nbsp;&nbsp; < 2e-16 ***</tr></br>
 </table>
 
 </br>
 
-<b> Model jest kiepsko dopasowany - R2 na poziomie 0,34 na zbiorze uczącym. MAE wynosci 1.07 </b> 
+<b> Model jest słabo dopasowany do obserwacji empirycznych - R2 na poziomie 0,34 na zbiorze uczącym. Taka wartość pokazuje, że model objaśnia tylko część zmiany długości śledzia i prawdopodobnie pomija inne istotne zmienne. MAE wynosci 1,07 co przy zmianie z długości śledzia z maksimum 26,7 do 24 cm jest błędem bardzo dużym (ponad 30%). Niemniej wymienione wcześniej czynniki: fbar, cumf, cfin2 i sst mają bardzo wysoki poziom istotniości i niewątpliwe wpływaja na zmianę długości ryby.</b> 
 
      RMSE  Rsquared       MAE 
-1.3625958 0.3253109 1.0691648 
+1.3625958 &nbsp;&nbsp;&nbsp; 0.3253109 &nbsp;&nbsp;&nbsp; 1.0691648 
 
 # Ustawienia programu R
 ## Wykorzystane bilblioteki
@@ -125,6 +127,8 @@ for (i in 1:(i_rows)) {
 }
 ```
 ## Rozmiar zbioru
+
+Liczba wierszy i liczba kolumn:
 
 ```{r rozmiar, echo = FALSE}
 cols.num <- c("cfin1","cfin2","chel1","chel2","lcop1","lcop2","sst")
